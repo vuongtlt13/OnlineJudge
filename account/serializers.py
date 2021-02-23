@@ -1,5 +1,9 @@
+import json
+
 from django import forms
 
+from problem.models import Problem
+from submission.models import JudgeStatus
 from utils.api import serializers, UsernameSerializer
 
 from .models import AdminType, ProblemPermission, User, UserProfile
@@ -70,6 +74,7 @@ class UserSerializer(serializers.ModelSerializer):
 class UserProfileSerializer(serializers.ModelSerializer):
     user = UserSerializer()
     real_name = serializers.SerializerMethodField()
+    final_total_score = serializers.SerializerMethodField()
 
     class Meta:
         model = UserProfile
@@ -81,6 +86,21 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
     def get_real_name(self, obj):
         return obj.real_name if self.show_real_name else None
+
+    def get_final_total_score(self, obj):
+        return self.get_acm_total_score(obj) + obj.total_score
+
+    def get_acm_total_score(self, obj):
+        acm_problems = obj.acm_problems_status.get('problems', None)
+        if acm_problems is None:
+            return 0
+        total_score = 0
+        for acm_problem in list(acm_problems.values()):
+            if acm_problem['status'] != JudgeStatus.ACCEPTED:
+                continue
+            problem = Problem.objects.get(_id=acm_problem['_id'])
+            total_score += problem.total_score / problem.accepted_number
+        return round(total_score, 2)
 
 
 class EditUserSerializer(serializers.Serializer):
@@ -137,7 +157,24 @@ class FileUploadForm(forms.Form):
 
 class RankInfoSerializer(serializers.ModelSerializer):
     user = UsernameSerializer()
+    final_total_score = serializers.SerializerMethodField()
+
 
     class Meta:
         model = UserProfile
         fields = "__all__"
+
+    def get_final_total_score(self, obj):
+        return self.get_acm_total_score(obj) + obj.total_score
+
+    def get_acm_total_score(self, obj):
+        acm_problems = obj.acm_problems_status.get('problems', None)
+        if acm_problems is None:
+            return 0
+        total_score = 0
+        for acm_problem in list(acm_problems.values()):
+            if acm_problem['status'] != JudgeStatus.ACCEPTED:
+                continue
+            problem = Problem.objects.get(_id=acm_problem['_id'])
+            total_score += problem.total_score / problem.accepted_number
+        return round(total_score, 2)

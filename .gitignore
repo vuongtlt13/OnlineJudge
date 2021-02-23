@@ -60,6 +60,7 @@ tmp/
 custom_settings.py
 *.zip
 
+/data/*
 data/log/*
 !data/log/.gitkeep
 data/test_case/*
@@ -77,3 +78,4 @@ http_locations.conf
 https_locations.conf
 
 venv/
+.env

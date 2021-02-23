@@ -79,6 +79,21 @@ class ProblemAPI(APIView):
         return self.success(data)
 
 
+class NewestProblemAPI(APIView):
+    def get(self, request):
+        limit = request.GET.get("limit")
+        if not limit:
+            limit = 10
+        else:
+            limit = int(limit)
+
+        problems = Problem.objects.filter(contest_id__isnull=True, visible=True).order_by('-create_time')[:limit]
+        results = ProblemSerializer(problems, many=True).data
+        data = {"problems": results,
+                "total": limit}
+        return self.success(data)
+
+
 class ContestProblemAPI(APIView):
     def _add_problem_status(self, request, queryset_values):
         if request.user.is_authenticated:

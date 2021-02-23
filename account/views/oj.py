@@ -377,13 +377,14 @@ class UserRankAPI(APIView):
     def get(self, request):
         rule_type = request.GET.get("rule")
         if rule_type not in ContestRuleType.choices():
-            rule_type = ContestRuleType.ACM
+            rule_type = ContestRuleType.HYBRID
         profiles = UserProfile.objects.filter(user__admin_type=AdminType.REGULAR_USER, user__is_disabled=False) \
             .select_related("user")
         if rule_type == ContestRuleType.ACM:
             profiles = profiles.filter(submission_number__gt=0).order_by("-accepted_number", "submission_number")
-        else:
+        elif rule_type == ContestRuleType.OI:
             profiles = profiles.filter(total_score__gt=0).order_by("-total_score")
+
         return self.success(self.paginate_data(request, profiles, RankInfoSerializer))
 
 
@@ -433,4 +434,25 @@ class SSOAPI(CSRFExemptAPIView):
             user = User.objects.get(auth_token=request.data["token"])
         except User.DoesNotExist:
             return self.error("User does not exist")
-        return self.success({"username": user.username, "avatar": user.userprofile.avatar, "admin_type": user.admin_type})
+        return self.success(
+            {"username": user.username, "avatar": user.userprofile.avatar, "admin_type": user.admin_type})
+
+
+class PositivestUser(APIView):
+    def get(self, request):
+        limit = request.GET.get("limit")
+        if not limit:
+            limit = 10
+        else:
+            limit = int(limit)
+
+        profiles = (
+            UserProfile.objects
+            .select_related("user")
+            .filter(user__admin_type=AdminType.REGULAR_USER, user__is_disabled=False)
+            .filter(submission_number__gt=0).order_by("-submission_number")[:limit]
+        )
+        result = RankInfoSerializer(profiles, many=True).data
+        return self.success({
+            'members': result
+        })
