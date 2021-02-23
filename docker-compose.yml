@@ -23,7 +23,7 @@ services:
       - "5435:5432"
 
   judge-server:
-    image: registry.cn-hangzhou.aliyuncs.com/onlinejudge/judge_server
+    image: vuongtlt13/judge_server
     container_name: judge-server
     restart: always
     read_only: true
