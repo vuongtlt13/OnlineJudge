@@ -249,7 +249,6 @@ class JudgeDispatcher(DispatcherBase):
                 problem.accepted_number += 1
             problem_info = problem.statistic_info
             problem_info[result] = problem_info.get(result, 0) + 1
-            problem.save(update_fields=["accepted_number", "submission_number", "statistic_info"])
 
             # update_userprofile
             user = User.objects.select_for_update().get(id=self.submission.user_id)
@@ -261,13 +260,13 @@ class JudgeDispatcher(DispatcherBase):
                     acm_problems_status[problem_id] = {"status": self.submission.result, "_id": self.problem._id}
                     if self.submission.result == JudgeStatus.ACCEPTED:
                         user_profile.accepted_number += 1
+                        problem.unique_accepted_number += 1
                 elif acm_problems_status[problem_id]["status"] != JudgeStatus.ACCEPTED:
                     acm_problems_status[problem_id]["status"] = self.submission.result
                     if self.submission.result == JudgeStatus.ACCEPTED:
                         user_profile.accepted_number += 1
                 user_profile.acm_problems_status["problems"] = acm_problems_status
                 user_profile.save(update_fields=["submission_number", "accepted_number", "acm_problems_status"])
-
             else:
                 oi_problems_status = user_profile.oi_problems_status.get("problems", {})
                 score = self.submission.statistic_info["score"]
@@ -278,6 +277,7 @@ class JudgeDispatcher(DispatcherBase):
                                                       "score": score}
                     if self.submission.result == JudgeStatus.ACCEPTED:
                         user_profile.accepted_number += 1
+                        problem.unique_accepted_number += 1
                 elif oi_problems_status[problem_id]["status"] != JudgeStatus.ACCEPTED:
                     # minus last time score, add this time score
                     user_profile.add_score(this_time_score=score,
@@ -288,6 +288,8 @@ class JudgeDispatcher(DispatcherBase):
                         user_profile.accepted_number += 1
                 user_profile.oi_problems_status["problems"] = oi_problems_status
                 user_profile.save(update_fields=["submission_number", "accepted_number", "oi_problems_status"])
+
+            problem.save(update_fields=["accepted_number", "submission_number", "statistic_info", "unique_accepted_number"])
 
     def update_contest_problem_status(self):
         with transaction.atomic():

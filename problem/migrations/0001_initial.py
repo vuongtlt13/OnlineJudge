@@ -46,6 +46,7 @@ class Migration(migrations.Migration):
                 ('source', models.CharField(blank=True, max_length=200, null=True)),
                 ('total_submit_number', models.IntegerField(default=0)),
                 ('total_accepted_number', models.IntegerField(default=0)),
+                ('unique_accepted_number', models.IntegerField(default=0)),
                 ('created_by', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
             ],
             options={

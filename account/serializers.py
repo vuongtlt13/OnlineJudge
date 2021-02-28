@@ -99,7 +99,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
             if acm_problem['status'] != JudgeStatus.ACCEPTED:
                 continue
             problem = Problem.objects.get(_id=acm_problem['_id'])
-            total_score += problem.total_score / problem.accepted_number
+            total_score += problem.total_score / problem.unique_accepted_number
         return round(total_score, 2)
 
 
@@ -176,5 +176,5 @@ class RankInfoSerializer(serializers.ModelSerializer):
             if acm_problem['status'] != JudgeStatus.ACCEPTED:
                 continue
             problem = Problem.objects.get(_id=acm_problem['_id'])
-            total_score += problem.total_score / problem.accepted_number
+            total_score += problem.total_score / problem.unique_accepted_number
         return round(total_score, 2)
